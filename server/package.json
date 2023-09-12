@@ -13,6 +13,7 @@
   "dependencies": {
     "@thirdweb-dev/sdk": "^3.10.54",
     "bignumber.js": "^9.1.2",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "mqtt": "^5.0.5"
   }
 }

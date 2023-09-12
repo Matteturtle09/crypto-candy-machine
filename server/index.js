@@ -1,5 +1,16 @@
 import { ThirdwebSDK } from "@thirdweb-dev/sdk";
 import BigNumber from "bignumber.js";
+import * as mqtt from "mqtt";
+
+const client = mqtt.connect("mqtt://test.mosquitto.org");
+
+client.on("connect", () => {
+  client.subscribe("crypto-candy-machine/#", (err) => {
+    if (!err) {
+      client.publish("crypto-candy-machine/server", "Online");
+    }
+  });
+});
 
 const sdk = new ThirdwebSDK("goerli", {
   secretKey:
@@ -19,12 +30,18 @@ const unsubscribe = contract.events.listenToAllEvents((event) => {
     console.log(event.data.value);
     let mousecoinValue = new BigNumber(event.data.value._hex);
     mousecoinValue = +mousecoinValue;
-    console.log(
-      `${event.data.from} ha inviato ${mousecoinValue} Mousecoin a ${event.data.to}`
+    client.publish(
+      "crypto-candy-machine/transactions",
+      `{
+        "mittente": "${event.data.from}",
+        "quantitaMousecoin": "${mousecoinValue}",
+        "destinatario": "${event.data.to}"
+      }
+      `
     );
     if (mousecoinValue >= 1000000000000000000) {
-      let numberOfProducts = Math.floor(mousecoinValue/1000000000000000000)
-      console.log(`Successfully bought ${numberOfProducts} products`)
+      let numberOfProducts = Math.floor(mousecoinValue / 1000000000000000000);
+      console.log(`Successfully bought ${numberOfProducts} products`);
     }
   }
 });
