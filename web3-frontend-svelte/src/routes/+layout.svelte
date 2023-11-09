@@ -4,8 +4,6 @@
   @tailwind utilities;
 </style>
 
-<script>
-    
-</script>
+
 
 <slot></slot>
