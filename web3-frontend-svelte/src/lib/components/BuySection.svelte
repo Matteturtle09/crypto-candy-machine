@@ -1,10 +1,13 @@
 <script>
+  import PayWithCoins from "./PayWithCoins.svelte";
+
+  import PayWithCard from "./PayWithCard.svelte";
   import { providerStore, signerStore } from "$lib/stores.js";
   import { ethers } from "ethers";
-  import abi from "/workspace/crypto-candy-machine/web3-frontend-svelte/src/lib/abi.json";
+  import abi from "/workspace/crypto-candy-machine/web3-frontend-svelte/src/lib/tokenabi.json";
   import JSConfetti from "js-confetti";
 
-  let numberOfProducts = 0;
+  let numberOfProducts = 1;
   let unitPrice = 1;
   let price;
   let signer;
@@ -46,14 +49,16 @@
   }
 </script>
 
+<h1 class="mt-8 text-4xl font-bold text-center">Buy products</h1>
+
 <div class="flex justify-center items-center my-5 bg-base-100">
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
   <form
-    on:submit={async (e) => {
-      await buyProduct(e);
-    }}
     class="space-y-5 w-11/12"
+    on:click={(e) => {
+      e.preventDefault();
+    }}
   >
     <input
       type="number"
@@ -80,6 +85,9 @@
       <span>|</span>
       <span>|</span>
     </div>
-    <button id="sendButton" class="btn w-full">Buy</button>
+    {#if numberOfProducts > 0 && numberOfProducts <= 5}
+    <PayWithCoins {price} {numberOfProducts}/>
+    <PayWithCard {price} {numberOfProducts} />
+    {/if}
   </form>
 </div>

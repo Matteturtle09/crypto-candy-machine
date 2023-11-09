@@ -1,10 +1,11 @@
 <script>
   import { ethers } from "ethers";
   import { onMount } from "svelte";
-  import { providerStore, signerStore } from "$lib/stores.js";
+  import { providerStore, signerStore, accountStore } from "$lib/stores.js";
 
   let signer = null;
 
+  let address;
   let provider;
   let connected;
   async function requestProvider() {
@@ -14,6 +15,7 @@
     } else {
       provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
+     
       providerStore.set(provider);
       signerStore.set(signer);
       connected = true;
@@ -22,6 +24,8 @@
         to: "0x6AeD2aFd19b3c0aE7b9eC0f24177b5CF49628563",
         value: ethers.parseEther("0.00001"),
       });*/
+      address = await signer.getAddress();
+      
     }
   }
 
@@ -54,18 +58,23 @@
   >
 {:else}
   {#if window.ethereum.isMetaMask}
-  <button
-    class="mr-2 btn btn-accent normal-case text-xl text-base-100"
-    on:click|once={async () => {
-      await displayOnMetamask();
-    }} 
-  ><img class="w-full h-full" alt="metamask logo" src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/SVG_MetaMask_Icon_Color.svg"/> </button>
+    <button
+      class="mr-2 hidden md:inline btn btn-accent normal-case text-xl text-base-100"
+      on:click|once={async () => {
+        await displayOnMetamask();
+      }}
+      ><img
+        class="w-full h-full"
+        alt="metamask logo"
+        src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/SVG_MetaMask_Icon_Color.svg"
+      />
+    </button>
   {/if}
   <button
     on:click={async () => {
       await requestProvider();
     }}
     class="btn btn-accent no-animation normal-case text-xl text-base-100"
-    >Connesso</button
+    >Connected <h1 class="hidden md:inline md:w-32 text-xl truncate ...">{address}</h1></button
   >
 {/if}
