@@ -13,9 +13,25 @@
       console.log("MetaMask not installed; using read-only defaults");
       provider = ethers.getDefaultProvider();
     } else {
+      window.ethereum.request({
+        method: "wallet_addEthereumChain",
+        params: [
+          {
+            chainId: "0x5",
+            rpcUrls: ["https://eth-goerli.public.blastapi.io"],
+            chainName: "Goerli TestNet",
+            nativeCurrency: {
+              name: "ETH",
+              symbol: "ETH",
+              decimals: 18,
+            },
+            blockExplorerUrls: ["https://polygonscan.com/"],
+          },
+        ],
+      });
       provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
-     
+      
       providerStore.set(provider);
       signerStore.set(signer);
       connected = true;
@@ -25,7 +41,6 @@
         value: ethers.parseEther("0.00001"),
       });*/
       address = await signer.getAddress();
-      
     }
   }
 
@@ -46,7 +61,12 @@
 
   onMount(async () => {
     await requestProvider();
+    window.ethereum.on('accountsChanged', function (accounts) {
+        accountStore.set(accounts[0] ); // change the store to  new address
+    });
+
   });
+
 </script>
 
 {#if !connected}
@@ -75,6 +95,8 @@
       await requestProvider();
     }}
     class="btn btn-accent no-animation normal-case text-xl text-base-100"
-    >Connected <h1 class="hidden md:inline md:w-32 text-xl truncate ...">{address}</h1></button
+    >Connected <h1 class="hidden md:inline md:w-32 text-xl truncate ...">
+      {$accountStore || address} 
+    </h1></button
   >
 {/if}

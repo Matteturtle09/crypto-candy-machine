@@ -4,6 +4,9 @@
   import abi from "/workspace/crypto-candy-machine/web3-frontend-svelte/src/lib/tokenabi.json";
   import JSConfetti from "js-confetti";
   import { cooledDown } from "$lib/stores.js";
+  import {
+		PUBLIC_ERC20_CONTRACT_ADDRESS,
+	} from '$env/static/public'
 
   export let numberOfProducts;
   export let price;
@@ -21,7 +24,7 @@
     cooledDown.set(true);
     if (signer != null) {
       const contract = new ethers.Contract(
-        "0x44AA3C7Bb422D724e4E91d0a641Cea58f1429e86",
+        PUBLIC_ERC20_CONTRACT_ADDRESS,
         abi,
         provider
       );
