@@ -12,43 +12,23 @@
   let price;
   let signer;
   let provider;
+  let currentNetwork;
+
   $: price = (numberOfProducts * unitPrice).toFixed(1);
   signerStore.subscribe((value) => {
     signer = value;
   });
-  providerStore.subscribe((value) => {
+
+  providerStore.subscribe(async (value) => {
     provider = value;
+
   });
-
-  async function buyProduct(e) {
-    const jsConfetti = new JSConfetti();
-
-    if (signer != null) {
-      const contract = new ethers.Contract(
-        "0x44AA3C7Bb422D724e4E91d0a641Cea58f1429e86",
-        abi,
-        provider
-      );
-      const contractSigner = contract.connect(signer);
-      let contract_name = await contract.totalSupply();
-      console.log(contract_name);
-      const tx = await contractSigner.transfer(
-        "0x6AeD2aFd19b3c0aE7b9eC0f24177b5CF49628563",
-        ethers.parseEther(price)
-      );
-      let receipt = await tx.wait();
-      console.log(receipt);
-      if (receipt.status == 1) {
-        await jsConfetti.addConfetti({
-          emojis: ["🍬", "🍭", "🌸"],
-          confettiNumber: numberOfProducts * 50,
-        });
-        jsConfetti.clearCanvas();
-      }
-    }
-  }
+  
+  $: provider?.getNetwork().then((network) => { currentNetwork = network;})
+  $: console.log(currentNetwork)
 </script>
 
+{#if currentNetwork !== undefined && currentNetwork.chainId == '0x5' && currentNetwork.name == 'goerli'}
 <h1 class="mt-8 text-4xl font-bold text-center">Buy products</h1>
 
 <div class="flex justify-center items-center my-5 bg-base-100">
@@ -86,8 +66,9 @@
       <span>|</span>
     </div>
     {#if numberOfProducts > 0 && numberOfProducts <= 5}
-    <PayWithCoins {price} {numberOfProducts}/>
-    <PayWithCard {price} {numberOfProducts} />
+      <PayWithCoins {price} {numberOfProducts} />
+      <PayWithCard {numberOfProducts} />
     {/if}
   </form>
 </div>
+{/if}
