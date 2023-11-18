@@ -1,47 +1,62 @@
-import { ThirdwebSDK } from "@thirdweb-dev/sdk";
+import "dotenv/config";
+import { Contract, ethers, utils } from "ethers";
 import BigNumber from "bignumber.js";
+import tokenAbi from "./tokenabi.json" assert { type: "json" };
 import * as mqtt from "mqtt";
+console.log(process.env.ERC20_CONTRACT_ADDRESS);
 
-const client = mqtt.connect("mqtt://test.mosquitto.org");
+const client = mqtt.connect(process.env.MQTT_SERVER_ADDRESS, {
+  username: process.env.MQTT_SERVER_USERNAME || "",
+  password: process.env.MQTT_SERVER_PASSWORD || "",
+});
+const provider = new ethers.providers.WebSocketProvider(
+  process.env.ETH_PROVIDER,
+  "goerli"
+);
 
 client.on("connect", () => {
   client.subscribe("crypto-candy-machine/#", (err) => {
     if (!err) {
+      console.log(err);
       client.publish("crypto-candy-machine/server", "Online");
+      const interval = setInterval(function () {
+        client.publish("crypto-candy-machine/server", "Online");
+      }, 10000);      
+    } else {
+      console.log(err);
     }
   });
 });
 
-const sdk = new ThirdwebSDK("goerli", {
-  secretKey:
-    "9FZn6hmjtWQHOeQSBDE7ESzbHXsFFBBPr2I0mO1Ur24kT9eUYWyLtynCprWxEuOuHK_B_Rhq5V1ng2jAtcmISg",
-});
-
-const contract = await sdk.getContract(
-  "0xC40821263Ef1F7c266248e30511543eDD2Ef222E"
+const tokenContract = new ethers.Contract(
+  process.env.ERC20_CONTRACT_ADDRESS,
+  tokenAbi,
+  provider
 );
 
-const unsubscribe = contract.events.listenToAllEvents((event) => {
-  console.log(event.eventName); // the name of the emitted event
-  if (
-    event.eventName == "Transfer" &&
-    event.data.to == "0x6AeD2aFd19b3c0aE7b9eC0f24177b5CF49628563"
-  ) {
-    console.log(event.data.value);
-    let mousecoinValue = new BigNumber(event.data.value._hex);
-    mousecoinValue = +mousecoinValue;
-    client.publish(
-      "crypto-candy-machine/transactions",
-      `{
-        "mittente": "${event.data.from}",
-        "quantitaMousecoin": "${mousecoinValue}",
-        "destinatario": "${event.data.to}"
-      }
-      `
-    );
-    if (mousecoinValue >= 1000000000000000000) {
-      let numberOfProducts = Math.floor(mousecoinValue / 1000000000000000000);
-      console.log(`Successfully bought ${numberOfProducts} products`);
-    }
+const block = await provider.getBlockNumber();
+
+let transferEvents = await tokenContract.queryFilter(
+  "Transfer",
+  block - 50000,
+  block
+);
+transferEvents = transferEvents.map((event) => {
+  return {
+    value: ethers.utils.formatEther(event.args.value),
+    from: event.args.from,
+    to: event.args.to,
+  };
+});
+
+tokenContract.on("Transfer", (from, to, value, event) => {
+  if (to == process.env.ETH_SHOP_ADDRESS) {
+    client.publish("crypto-candy-machine/txs", {
+      value: ethers.utils.formatEther(value),
+      from: from,
+      to: to,
+    });
   }
+
+  console.log(event.blockNumber);
 });
