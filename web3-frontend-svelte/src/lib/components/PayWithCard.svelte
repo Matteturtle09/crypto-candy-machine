@@ -24,44 +24,43 @@
   });
   cardStore.subscribe((value) => {
     ownedCards = value;
-  })
-  accountStore.subscribe(async(value) => {
+  });
+  accountStore.subscribe(async (value) => {
     if (signer != null) {
-        cardStore.set([]);
-        const contract = new ethers.Contract(
-          PUBLIC_ERC1155_CONTRACT_ADDRESS,
-          abi,
-          provider
-        );
-        const contractSigner = contract.connect(signer);
-        let nextTokenIdToMint = await contract.nextTokenIdToMint();
-        for (let step = nextTokenIdToMint; step >= 0; step--) {
-          if ((await contract.balanceOf(value, step)) > 0) {
-            let nftRes = await fetch(toIPFSgateway(await contract.uri(step)));
-            ownedCards.push(await nftRes.json());
-            cardStore.set(ownedCards);
-            ownedCards = ownedCards;
-          }
+      cardStore.set([]);
+      const contract = new ethers.Contract(
+        PUBLIC_ERC1155_CONTRACT_ADDRESS,
+        abi,
+        provider
+      );
+      const contractSigner = contract.connect(signer);
+      let nextTokenIdToMint = await contract.nextTokenIdToMint();
+      for (let step = nextTokenIdToMint; step >= 0; step--) {
+        if ((await contract.balanceOf(value, step)) > 0) {
+          let nftRes = await fetch(toIPFSgateway(await contract.uri(step)));
+          ownedCards.push(await nftRes.json());
+          cardStore.set(ownedCards);
+          ownedCards = ownedCards;
         }
       }
+    }
   });
 
   async function buyProduct(e) {
     if (!$cooledDown && ownedCards.length > 0) {
-      console.log( ownedCards.length)
-      /* let orderRes = await fetch("/cardPay", {
-        method: "POST",
-        body: JSON.stringify({ orderQty: numberOfProducts, apiKey: API_KEY }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      console.log(await orderRes.json());*/
+      console.log(ownedCards.length);
       cooledDown.set(true);
       setTimeout(async () => {
         cooledDown.set(false);
       }, 10000);
       const jsConfetti = new JSConfetti();
+      let orderRes = await fetch("/order", {
+        method: "POST",
+        body: JSON.stringify({ orderQty: numberOfProducts }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       if (Math.random() > 0.9) {
         await jsConfetti.addConfetti({
           emojis: ["🍬", "🍭", "🌸", "💳"],
@@ -78,7 +77,6 @@
     }
   }
 
-  
   onMount(async () => {
     setTimeout(async () => {
       if (signer != null) {
@@ -90,7 +88,12 @@
         const contractSigner = contract.connect(signer);
         let nextTokenIdToMint = await contract.nextTokenIdToMint();
         for (let step = nextTokenIdToMint; step >= 0; step--) {
-          if ((await contract.balanceOf($accountStore || await signer.getAddress(), step)) > 0) {
+          if (
+            (await contract.balanceOf(
+              $accountStore || (await signer.getAddress()),
+              step
+            )) > 0
+          ) {
             let nftRes = await fetch(toIPFSgateway(await contract.uri(step)));
             ownedCards.push(await nftRes.json());
             cardStore.set(ownedCards);

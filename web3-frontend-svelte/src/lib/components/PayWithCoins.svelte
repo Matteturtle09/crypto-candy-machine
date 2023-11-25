@@ -4,9 +4,7 @@
   import abi from "/workspace/crypto-candy-machine/web3-frontend-svelte/src/lib/tokenabi.json";
   import JSConfetti from "js-confetti";
   import { cooledDown } from "$lib/stores.js";
-  import {
-		PUBLIC_ERC20_CONTRACT_ADDRESS,
-	} from '$env/static/public'
+  import { PUBLIC_ERC20_CONTRACT_ADDRESS } from "$env/static/public";
 
   export let numberOfProducts;
   export let price;
@@ -38,8 +36,17 @@
           ethers.parseEther(price)
         );
         let receipt = await tx.wait();
-        console.log(receipt);
+
         if (receipt.status == 1) {
+          let orderRes = await fetch("/order", {
+            method: "POST",
+            body: JSON.stringify({ orderQty: numberOfProducts }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          console.log(orderRes)
+
           cooledDown.set(false);
           await jsConfetti.addConfetti({
             emojis: ["🍬", "🍭", "🌸"],
