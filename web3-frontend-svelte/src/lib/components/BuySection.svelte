@@ -4,7 +4,6 @@
   import PayWithCard from "./PayWithCard.svelte";
   import { providerStore, signerStore } from "$lib/stores.js";
   import { ethers } from "ethers";
-  import abi from "/workspace/crypto-candy-machine/web3-frontend-svelte/src/lib/tokenabi.json";
   import JSConfetti from "js-confetti";
 
   let numberOfProducts = 1;
